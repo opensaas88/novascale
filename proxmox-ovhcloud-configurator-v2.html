@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurateur Proxmox VE — OVHcloud Bare Metal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700;9..40,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#111318;--bg2:#1a1c22;--bg3:#1e1f26;--border:#2a2d35;--border2:#333;--txt:#e8e6e3;--txt2:#ccc;--txt3:#999;--txt4:#777;--txt5:#666;--txt6:#555;--accent:#e25d10;--accent2:#ff8c42;--green:#10b981;--red:#f87171;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace}
+html{scroll-behavior:smooth}body{background:var(--bg);color:var(--txt);font-family:var(--font);min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.fadein{animation:fadeUp .45s ease both}.d1{animation-delay:.04s}.d2{animation-delay:.08s}.d3{animation-delay:.12s}.d4{animation-delay:.16s}
+
+.header{background:linear-gradient(165deg,#1a1c22 0%,#111318 40%,#1e120a 100%);border-bottom:1px solid var(--border);padding:28px 24px 24px;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(226,93,16,.12) 0%,transparent 70%);pointer-events:none}
+.header-inner{max-width:960px;margin:0 auto;position:relative;display:flex;align-items:center;gap:14px}
+.logo-box{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font:800 15px/1 var(--mono);color:#fff;flex-shrink:0}
+.header h1{font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.1}.header .sub{font:12px var(--mono);color:var(--txt4);margin-top:2px}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 80px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;margin:20px 0 0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px;overflow-x:auto}
+.tab-btn{flex:1;padding:11px 16px;border:none;background:transparent;color:var(--txt4);font:600 12px var(--font);cursor:pointer;border-radius:9px;transition:all .2s;white-space:nowrap;position:relative}
+.tab-btn:hover{color:var(--txt2);background:rgba(255,255,255,.03)}
+.tab-btn.on{color:#fff;background:rgba(226,93,16,.12);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tab-btn.on::after{content:'';position:absolute;bottom:0;left:25%;right:25%;height:2px;background:var(--accent);border-radius:2px}
+.tab-btn .tb-icon{margin-right:6px}
+.tab-panel{display:none}.tab-panel.on{display:block}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:14px;padding:40px 24px;text-align:center;background:var(--bg2);transition:all .3s;cursor:pointer;margin-top:20px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(226,93,16,.04)}
+.upload-zone .uz-icon{font-size:36px;margin-bottom:8px;opacity:.4}
+.upload-zone .uz-t{font:600 14px var(--font);color:var(--txt2);margin-bottom:4px}
+.upload-zone .uz-d{font:12px var(--mono);color:var(--txt4)}
+.upload-zone input{display:none}
+.catalog-info{margin-top:12px;padding:12px 16px;border-radius:10px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.18);font:12px var(--mono);color:var(--green);display:flex;align-items:center;gap:10px}
+.catalog-info .ci-x{margin-left:auto;cursor:pointer;color:var(--txt5);font-size:16px}
+.catalog-info .ci-x:hover{color:var(--red)}
+
+.sec{display:flex;align-items:center;gap:12px;margin:34px 0 13px}
+.sec .n{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font:800 12px/1 var(--font);color:#fff;flex-shrink:0}
+.sec h3{font-size:15px;font-weight:700;letter-spacing:-.02em}
+
+.cg{display:grid;gap:10px}.cg2{grid-template-columns:1fr 1fr}.cg3{grid-template-columns:1fr 1fr 1fr}.cg4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:700px){.cg2,.cg3,.cg4{grid-template-columns:1fr}}
+
+.cd{border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;background:var(--bg2);transition:all .18s;position:relative}
+.cd:hover{border-color:#444}.cd.on{border-color:var(--accent);background:rgba(226,93,16,.06)}
+.cd .dot{width:15px;height:15px;border-radius:50%;border:2px solid #555;position:absolute;top:12px;right:12px;transition:all .15s}
+.cd.on .dot{border:5px solid var(--accent);background:var(--bg2)}
+.cd .t{font-weight:700;font-size:13px;margin-bottom:2px}.cd .d{font-size:11px;color:var(--txt3);line-height:1.4}
+
+.bg{display:inline-block;font:700 9px/1 var(--mono);padding:3px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;background:rgba(226,93,16,.15);color:var(--accent2)}
+.bg.gr{background:rgba(16,185,129,.15);color:var(--green)}.bg.bl{background:rgba(59,130,246,.15);color:#60a5fa}.bg.pu{background:rgba(168,85,247,.15);color:#c084fc}.bg.tl{background:rgba(20,184,166,.15);color:var(--teal)}
+.tag{font:10px var(--mono);color:var(--txt3);background:#222;padding:2px 6px;border-radius:3px;display:inline-block}
+.tag.gr{color:var(--green);background:rgba(16,185,129,.1)}
+
+.bt{border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--txt3);font:600 13px var(--font);padding:8px 14px;cursor:pointer;transition:all .18s}
+.bt:hover{border-color:#555;color:var(--txt2)}.bt.on{border:2px solid var(--accent);color:#fff;background:rgba(226,93,16,.08)}
+.bt.pri{border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;font-size:14px;padding:14px 28px;border-radius:10px;box-shadow:0 4px 20px rgba(226,93,16,.3)}
+.bt.pri:hover{filter:brightness(1.1)}.bt.gh{border:1px dashed #444;background:transparent;color:#888}
+.bt.sm{padding:7px 13px;font:700 13px var(--mono)}
+
+.cpu-tog{display:flex;background:#16171d;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cpu-tog button{flex:1;padding:12px 14px;border:none;background:transparent;color:var(--txt3);font:600 12px var(--font);cursor:pointer;transition:all .18s;position:relative;display:flex;align-items:center;justify-content:center;gap:7px}
+.cpu-tog button:not(:last-child){border-right:1px solid var(--border)}
+.cpu-tog button:hover{color:var(--txt2);background:rgba(255,255,255,.03)}
+.cpu-tog button.on{color:#fff;background:rgba(226,93,16,.1)}
+.cpu-tog button.on::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:2px}
+.cpu-logo{width:18px;height:18px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font:800 7px/1 var(--mono);color:#fff;flex-shrink:0}
+.cpu-logo.amd{background:linear-gradient(135deg,#ed1c24,#ff6b6b)}.cpu-logo.intel{background:linear-gradient(135deg,#0071c5,#4db8ff)}
+
+.sel{appearance:none;background:var(--bg2) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--border2);border-radius:8px;padding:10px 34px 10px 12px;color:var(--txt);font:14px var(--font);width:100%;outline:none;transition:border-color .2s}
+.sel:focus{border-color:var(--accent)}
+
+.lr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:3px}
+.lr:hover{background:rgba(255,255,255,.02)}.lr.on{border-color:var(--accent);background:rgba(226,93,16,.05)}
+.lr .ld{width:13px;height:13px;border-radius:50%;border:2px solid #555;flex-shrink:0;transition:all .15s}.lr.on .ld{border:4px solid var(--accent)}
+.lr .ln{flex:1;font-size:12px;color:var(--txt2)}.lr .lp{font:600 11px var(--mono);color:var(--accent2)}.lr .lp.fr{color:var(--green)}
+
+.rg{display:flex;flex-wrap:wrap;gap:9px}
+.rp{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);font:700 14px var(--mono);color:var(--txt3);min-width:85px;text-align:center;cursor:pointer;transition:all .18s;line-height:1.4}
+.rp:hover{border-color:#555}.rp.on{border:2px solid var(--accent);color:#fff;background:rgba(226,93,16,.08)}
+.rp .ex{font-size:10px;color:var(--txt4);font-weight:400}.rp .inc{font-size:9px;color:var(--green)}
+
+.sb{padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);font:600 12px var(--font);color:var(--txt3);text-align:center;cursor:pointer;transition:all .18s;line-height:1.4}
+.sb:hover{border-color:#555}.sb.on{border:2px solid var(--accent);color:#fff;background:rgba(226,93,16,.08)}
+.sb .sp{font:400 10px var(--mono);color:var(--txt4)}
+
+.sc{padding:13px 15px}.sc .sh{display:flex;justify-content:space-between;align-items:flex-start}
+.sc .si{flex:1;padding-right:32px}.sc .sn{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
+.sc .sn strong{font-size:13px;color:#fff}.sc .sn .ch{font:10px var(--mono);color:#888;background:#222;padding:2px 5px;border-radius:3px}
+.sc .su{font:11px/1.5 var(--mono);color:#bbb;margin-bottom:2px}.sc .sf{font:10px var(--mono);color:var(--txt4)}
+.sc .sp{text-align:right;flex-shrink:0;margin-top:2px}.sc .sp .am{font:800 16px var(--mono);color:var(--accent)}.sc .sp .un{font-size:10px;color:var(--txt4)}
+.sc .tg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+
+.mk-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+.mk-input{width:90px;padding:9px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--txt);font:700 17px var(--mono);text-align:right;outline:none;transition:border-color .2s}
+.mk-input:focus{border-color:var(--accent)}.mk-pct{font:700 17px var(--mono);color:var(--txt3)}.mk-label{font-size:12px;color:var(--txt3)}.mk-result{font:700 12px var(--mono);color:var(--accent2);margin-left:auto}
+
+.sum{margin-top:38px;background:linear-gradient(145deg,#1e1f26,#171920);border:1px solid var(--border);border-radius:14px;padding:20px 24px;position:relative;overflow:hidden}
+.sum::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));background-size:200% 100%;animation:shimmer 3s ease infinite}
+.sum-t{font:700 12px var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.sum-g{display:grid;grid-template-columns:160px 1fr;gap:5px 18px;font-size:12px}
+.sum-g .l{color:var(--txt4)}.sum-g .v{color:var(--txt2);font-weight:600}.sum-g .v.s{font-size:11px;font-weight:400}
+.sum-f{border-top:1px solid var(--border);margin-top:16px;padding-top:16px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px}
+.pbig{font:800 32px/1 var(--mono);letter-spacing:-.03em;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));background-size:200% 100%;animation:shimmer 3s ease infinite;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.psub{font:11px var(--mono);color:var(--txt5);margin-top:3px}
+.inc-bar{margin-top:12px;padding:8px 12px;border-radius:8px;font-size:10px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);color:var(--green);line-height:1.6}
+
+.po{margin-top:20px;background:linear-gradient(145deg,#191b24,#14151b);border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:20px 24px;position:relative;overflow:hidden}
+.po::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),#818cf8,var(--blue));background-size:200% 100%;animation:shimmer 4s ease infinite}
+.po-t{font:700 12px var(--mono);color:#60a5fa;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.po-g{display:grid;grid-template-columns:190px 1fr;gap:7px 18px;font-size:12px}
+.po-g .l{color:var(--txt4)}.po-g .v{color:var(--txt2);font-weight:700;font-family:var(--mono)}
+.po-g .v.big{font-size:22px;color:#60a5fa}
+
+.cres{margin-top:20px;background:linear-gradient(145deg,#171f1a,#141a15);border:1px solid rgba(16,185,129,.18);border-radius:14px;padding:22px 24px;position:relative;overflow:hidden}
+.cres::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#14b8a6,#10b981);background-size:200% 100%;animation:shimmer 4s ease infinite}
+.cres-t{font:700 13px var(--font);color:#34d399;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.cres-t.deg{color:#fbbf24;margin-top:0}
+.cres-t.deg span{font:400 11px var(--mono);color:#d4a017}
+.cres-sep{border-top:1px solid rgba(255,255,255,.06);margin:20px 0 16px}
+.cres-row{margin-bottom:14px}
+.cres-row:last-child{margin-bottom:0}
+.cres-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.cres-lbl{font:500 12px var(--font);color:var(--txt3)}
+.cres-val{font:800 15px var(--mono);color:#fff}
+.cres-val.green{color:#34d399}.cres-val.gold{color:#fbbf24}.cres-val.orange{color:var(--accent)}
+.cres-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:2px}
+.cres-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.cres-bar-fill.blue{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.cres-bar-fill.gold{background:linear-gradient(90deg,#d97706,#fbbf24)}
+.cres-bar-fill.purple{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.cres-bar-fill.orange{background:linear-gradient(90deg,#e25d10,#ff8c42)}
+.cres-bar-fill.green{background:linear-gradient(90deg,#059669,#34d399)}
+.cres-bar-fill.teal{background:linear-gradient(90deg,#0d9488,#14b8a6)}
+.cres-sub{font:400 10px var(--mono);color:var(--txt5);margin-top:1px}
+.cres-note{margin-top:14px;padding:10px 14px;border-radius:8px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);font:italic 11px/1.5 var(--font);color:#6ee7b7}
+
+.fn{font:10px var(--mono);color:var(--txt6);margin-top:14px;line-height:1.6}
+.hidden{display:none!important}
+.empty-msg{padding:18px;text-align:center;color:var(--txt4);font-size:12px;border:1px dashed var(--border);border-radius:10px;margin-top:6px}
+.disclaimer{margin-top:16px;padding:12px 16px;border-radius:8px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.15);font:italic 11px/1.6 var(--font);color:#d4a017;display:flex;align-items:flex-start;gap:8px}
+.disclaimer::before{content:'⚠';font-style:normal;flex-shrink:0;font-size:13px}
+
+/* Synthese panels */
+.syn-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px}
+.syn-card h4{font:700 13px var(--font);color:var(--txt2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.syn-grid{display:grid;grid-template-columns:200px 1fr;gap:6px 18px;font-size:12px}
+.syn-grid .l{color:var(--txt4)}.syn-grid .v{color:var(--txt2);font-weight:600;font-family:var(--mono)}
+.syn-grid .v.hi{color:var(--accent2);font-size:18px;font-weight:800}
+.syn-grid .v.green{color:var(--green)}.syn-grid .v.blue{color:#60a5fa}
+.syn-sep{grid-column:1/-1;border-top:1px solid var(--border);margin:6px 0}
+.syn-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.syn-2col{grid-template-columns:1fr}}
+.syn-empty{padding:40px;text-align:center;color:var(--txt5);font-size:13px}
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.kpi{flex:1;min-width:140px;padding:16px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);text-align:center}
+.kpi .kv{font:800 24px var(--mono);margin-bottom:2px}.kpi .kl{font:11px var(--mono);color:var(--txt4)}
+.kpi.orange .kv{color:var(--accent2)}.kpi.green .kv{color:var(--green)}.kpi.blue .kv{color:#60a5fa}.kpi.purple .kv{color:#c084fc}.kpi.teal .kv{color:var(--teal)}
+@media print{.tabs,.upload-zone,.catalog-info,.bt.pri,.header::after{display:none!important}.header{padding:12px 24px}.tab-panel{display:block!important}}
+</style>
+</head>
+<body>
+<div class="header fadein">
+  <div class="header-inner">
+    <div class="logo-box">PVE</div>
+    <div><h1>Proxmox VE sur OVHcloud</h1><div class="sub" id="headerSub">Configurateur Bare Metal — Chargez un catalogue pricelist.ovh</div></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Upload zone -->
+  <div class="upload-zone fadein d1" id="uploadZone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+    <div class="uz-icon">📁</div>
+    <div class="uz-t">Charger un catalogue OVHcloud (CSV)</div>
+    <div class="uz-d">Glissez le fichier pricelist.ovh ici ou <u>cliquez pour parcourir</u><br>Seules les références (Europe, North America) seront importées</div>
+    <input type="file" id="csvInput" accept=".csv" onchange="handleFile(this.files[0])">
+  </div>
+  <div class="catalog-info hidden" id="catalogInfo">
+    <span>✓</span><span id="catalogDesc"></span><span class="ci-x" onclick="resetCatalog()">✕</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs hidden" id="mainTabs">
+    <button class="tab-btn on" data-tab="config" onclick="switchTab('config')"><span class="tb-icon">⚙</span>Configurateur</button>
+    <button class="tab-btn" data-tab="finance" onclick="switchTab('finance')"><span class="tb-icon">💰</span>Synthèse Financière</button>
+    <button class="tab-btn" data-tab="tech" onclick="switchTab('tech')"><span class="tb-icon">🖥</span>Synthèse Technique</button>
+  </div>
+
+  <!-- TAB 1: Configurateur -->
+  <div class="tab-panel on" id="tab-config">
+
+    <div class="sec fadein d1"><span class="n">1</span><h3>Mode de déploiement</h3></div>
+    <div class="cg cg3 fadein d1" id="modeG">
+      <div class="cd on" data-v="single" onclick="setMode('single')"><div class="dot"></div>
+        <div class="t">Single Node</div><div class="d">Serveur unique — idéal pour démarrer</div></div>
+      <div class="cd" data-v="cluster2az" onclick="setMode('cluster2az')"><div class="dot"></div>
+        <div class="t">Cluster 2 nœuds / 2 AZ <span class="bg tl">Résilient</span></div><div class="d">2 serveurs sur 2 zones de disponibilité · Réplication synchrone</div></div>
+      <div class="cd" data-v="cluster" onclick="setMode('cluster')"><div class="dot"></div>
+        <div class="t">Cluster HA <span class="bg gr">Recommandé</span></div><div class="d">Haute disponibilité failover automatique · 3 à 16 nœuds</div></div>
+    </div>
+    <div id="nodesWrap" class="hidden" style="margin-top:10px">
+      <label style="font-size:12px;color:var(--txt3);display:block;margin-bottom:5px">Nombre de nœuds</label>
+      <div id="nodesRow" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+    </div>
+
+    <div class="sec fadein d2"><span class="n">2</span><h3>Plateforme processeur</h3></div>
+    <div class="cpu-tog fadein d2" id="cpuTog">
+      <button class="on" data-v="all" onclick="setCpu('all')">Tous</button>
+      <button data-v="amd" onclick="setCpu('amd')"><span class="cpu-logo amd">A</span> AMD</button>
+      <button data-v="intel" onclick="setCpu('intel')"><span class="cpu-logo intel">i</span> Intel</button>
+    </div>
+
+    <div class="sec fadein d3"><span class="n">3</span><h3>Gamme de serveurs</h3></div>
+    <div id="rangeG" class="fadein d3"></div>
+
+    <div class="sec fadein d4"><span class="n">4</span><h3 id="srvT">Modèle de serveur</h3></div>
+    <div id="srvL" class="fadein d4" style="display:flex;flex-direction:column;gap:7px"></div>
+    <div id="srvEmpty" class="hidden empty-msg">Aucun serveur disponible pour ce filtre.</div>
+
+    <div id="cfgS" class="hidden">
+      <div class="sec"><span class="n">5</span><h3>Mémoire RAM</h3></div>
+      <div class="rg" id="ramG"></div>
+
+      <div class="sec"><span class="n">6</span><h3>Stockage</h3></div>
+      <div id="storL"></div>
+
+      <div class="sec"><span class="n">7</span><h3>Licence Windows Server (optionnel)</h3></div>
+      <p id="wH" style="font-size:10px;color:var(--txt5);font-style:italic;margin-bottom:6px"></p>
+      <div id="wL"></div>
+      <div id="winQtyWrap" class="hidden" style="margin-top:10px">
+        <div class="mk-wrap">
+          <span class="mk-label" style="margin-right:4px">Quantité de licences</span>
+          <input type="number" class="mk-input" id="winQtyIn" value="0" min="0" max="999" step="1" oninput="S.winQty=Math.max(0,parseInt(this.value)||0);updateWinQtyLabel();calc()" style="width:70px">
+          <span class="mk-label" id="winQtyDesc"></span>
+          <span class="mk-result" id="winQtyRes"></span>
+        </div>
+      </div>
+
+      <div class="sec"><span class="n">8</span><h3>Souscription Proxmox VE <span style="font:400 10px var(--mono);color:var(--txt4)">(par socket / an)</span></h3></div>
+      <div class="cg cg4" id="subG"></div>
+
+      <div class="sec"><span class="n">9</span><h3>Sauvegarde externalisée chiffrée (PBS)</h3></div>
+      <p style="font-size:10px;color:var(--txt5);font-style:italic;margin-bottom:8px">Proxmox Backup Server · Chiffrement AES-256-GCM · Déduplication & compression</p>
+      <div id="bkL"></div>
+
+      <div class="sec"><span class="n">10</span><h3>Infogérance BTBS <span style="font:400 10px var(--mono);color:var(--txt4)">(180 €/mois/nœud)</span></h3></div>
+      <div class="cg cg2" id="infogG">
+        <div class="cd on" data-v="true" onclick="setInfog(true)"><div class="dot"></div>
+          <div class="t">✓ Avec infogérance <span class="bg gr">Recommandé</span></div><div class="d">Supervision 24/7 · MCO/MCS · SLAs</div></div>
+        <div class="cd" data-v="false" onclick="setInfog(false)"><div class="dot"></div>
+          <div class="t">Sans infogérance</div><div class="d">Gestion autonome</div></div>
+      </div>
+
+      <div class="sec"><span class="n">11</span><h3>Accostage MPLS <span style="font:400 10px var(--mono);color:var(--txt4)">(640 €/mois)</span></h3></div>
+      <div class="cg cg2" id="mplsG">
+        <div class="cd" data-v="true" onclick="setMpls(true)"><div class="dot"></div>
+          <div class="t">✓ Accostage MPLS</div><div class="d">640 €/mois · Liaison privée WAN</div></div>
+        <div class="cd on" data-v="false" onclick="setMpls(false)"><div class="dot"></div>
+          <div class="t">Sans MPLS</div><div class="d">VPN/Internet</div></div>
+      </div>
+
+      <div class="sec"><span class="n">12</span><h3>Markup / Marge revendeur</h3></div>
+      <div class="mk-wrap">
+        <input type="number" class="mk-input" id="mkIn" value="0" min="0" max="500" step="1" oninput="S.markup=parseFloat(this.value)||0;calc()">
+        <span class="mk-pct">%</span>
+        <span class="mk-label">de marge sur OVHcloud HT</span>
+        <span class="mk-result" id="mkRes"></span>
+      </div>
+
+      <div class="sum" id="sumBox">
+        <div class="sum-t" id="sumT"></div>
+        <div class="sum-g" id="sumG"></div>
+        <div class="sum-f">
+          <div>
+            <div style="font-size:10px;color:var(--txt5);margin-bottom:2px" id="pLbl"></div>
+            <div class="pbig" id="pHT"></div>
+            <div class="psub" id="pTTC"></div>
+          </div>
+          <button class="bt pri" onclick="window.print()">Demander un devis</button>
+        </div>
+        <div class="inc-bar">✓ Anti-DDoS · ✓ vRack réseau privé · ✓ IPMI/KVM · ✓ Double alimentation · ✓ 500 Go backup FTP offert · ✓ Trafic illimité</div>
+        <div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>
+      </div>
+
+      <div class="cres hidden" id="cresBox">
+        <div class="cres-t">🗄 Ressources Totales Cluster</div>
+        <div id="cresContent"></div>
+        <div class="cres-sep"></div>
+        <div class="cres-t deg">🛡 Mode Dégradé <span id="cresMode"></span></div>
+        <div id="cresDeg"></div>
+        <div class="cres-note" id="cresNote"></div>
+      </div>
+
+      <div class="po" id="poBox">
+        <div class="po-t">📋 Bon de commande annuel (PO)</div>
+        <div class="po-g" id="poG"></div>
+      </div>
+
+      <p class="fn">* Prix indicatifs catalogue OVHcloud (Europe, North America). Souscriptions Proxmox VE : proxmox.com/pricing. Infogérance BTBS : 180 €HT/mois/nœud. MPLS : 640 €HT/mois. Licences Windows facturées au cœur physique.</p>
+    </div>
+  </div>
+
+  <!-- TAB 2: Synthèse Financière -->
+  <div class="tab-panel" id="tab-finance">
+    <div id="finContent"><div class="syn-empty">Configurez votre infrastructure dans l'onglet Configurateur pour voir la synthèse financière.</div></div>
+  </div>
+
+  <!-- TAB 3: Synthèse Technique -->
+  <div class="tab-panel" id="tab-tech">
+    <div id="techContent"><div class="syn-empty">Configurez votre infrastructure dans l'onglet Configurateur pour voir la synthèse technique.</div></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════ CSV PARSER ═══════════════════ */
+let CATALOG={};// range -> [{id,name,cpu,...,ramOpts,storOpts,bwOpts,gpuOpts}]
+let catalogDate='';
+
+function parseCSV(text){
+  const rows=[];let row=[],f='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){
+      if(inQ&&text[i+1]==='"'){f+='"';i++;continue;}
+      inQ=!inQ;continue;
+    }
+    if(c===','&&!inQ){row.push(f);f='';continue;}
+    if(c==='\n'&&!inQ){row.push(f);rows.push(row);row=[];f='';continue;}
+    if(c==='\r'&&!inQ)continue;
+    f+=c;
+  }
+  if(f||row.length){row.push(f);rows.push(row);}
+  return rows;
+}
+
+function parseStorageDesc(desc){
+  // Parse "4x SSD NVMe 3.84TB Enterprise Class Soft RAID" → {disks,totalGb,label}
+  if(!desc||desc==='No storage drive')return{disks:0,totalGb:0,label:'Sans stockage'};
+  const parts=desc.split('+').map(p=>p.trim());
+  let disks=0,totalGb=0,labels=[];
+  for(const p of parts){
+    const m=p.match(/(\d+)x\s+(\w+)\s+(\w+)\s+([\d.]+)(GB|TB)/i);
+    if(m){
+      const cnt=parseInt(m[1]),sz=parseFloat(m[4]),unit=m[5];
+      const gb=unit.toUpperCase()==='TB'?sz*1024:sz;
+      disks+=cnt;totalGb+=cnt*gb;
+      labels.push(`${cnt}× ${m[2]} ${m[3]} ${m[4]}${m[5]}`);
+    }
+  }
+  // Simplify label
+  let lbl=labels.join(' + ');
+  if(desc.includes('Hard RAID'))lbl+=' HR';
+  else if(desc.includes('Soft RAID'))lbl+=' SR';
+  if(desc.includes('PCIe 5'))lbl+=' PCIe5';
+  if(desc.includes('cache'))lbl+=' +Cache';
+  return{disks,totalGb,label:lbl||desc.substring(0,50)};
+}
+
+function parseRamGb(desc){
+  const m=desc.match(/([\d.,]+)\s*(GB|TB)/i);
+  if(!m)return 0;
+  const v=parseFloat(m[1].replace(',','.'));
+  return Math.round(m[2].toUpperCase()==='TB'?v*1024:v);
+}
+
+function detectBrand(cpu){
+  const c=cpu.toUpperCase();
+  if(c.includes('AMD')||c.includes('EPYC')||c.includes('RYZEN'))return'amd';
+  if(c.includes('INTEL')||c.includes('XEON'))return'intel';
+  return'other';
+}
+
+function buildCatalog(rows){
+  const srvMap={};// key -> server object
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(r.length<13)continue;
+    const[range,name,desc,cpu,cores,threads,speed,ramSum,ramGb,ramClk,ramType,price,setup]=r;
+    if(!name.includes('(Europe, North America)'))continue;
+    const key=name;
+    if(!srvMap[key])srvMap[key]={range:range.toLowerCase(),fullName:name,ramOpts:[],storOpts:[],bwOpts:[],gpuOpts:[]};
+    const sv=srvMap[key];
+    if(cpu){// Base config line
+      sv.cpu=cpu;sv.cores=parseInt(cores)||0;sv.threads=parseInt(threads)||0;
+      sv.speed=speed;sv.baseRam=parseInt(ramGb)||0;sv.ramType=ramType;
+      sv.ramClk=ramClk;sv.price=parseFloat(price)||0;sv.setup=parseFloat(setup)||0;
+      // Parse BW from desc
+      const bwM=desc.match(/Default Public Bandwidth:\s*(.+?)(?:\s*Default Private|$)/);
+      const pvM=desc.match(/Default Private Bandwidth:\s*(.+?)$/);
+      sv.pubBw=bwM?bwM[1].trim():'—';
+      sv.privBw=pvM?pvM[1].trim():'—';
+      // Extract server short name
+      const nm=name.split('(')[0].trim();
+      const parts=nm.split('|').map(s=>s.trim());
+      sv.shortName=parts[0];sv.cpuLabel=parts[1]||cpu;
+    } else if(desc.includes(' - ')){
+      const optPart=desc.split(' - ')[1];
+      const[optType,...rest]=optPart.split(':');
+      const optVal=rest.join(':').trim();
+      const p=parseFloat(price)||0;
+      if(optType.includes('RAM'))sv.ramOpts.push({desc:optVal,price:p,gb:parseRamGb(optVal)});
+      else if(optType.includes('Storage'))sv.storOpts.push({desc:optVal,price:p,...parseStorageDesc(optVal)});
+      else if(optType.includes('Bandwidth'))sv.bwOpts.push({desc:optVal,price:p});
+      else if(optType.includes('GPU'))sv.gpuOpts.push({desc:optVal,price:p});
+    }
+  }
+  // Build CATALOG grouped by range
+  CATALOG={};
+  let count=0;
+  for(const[key,sv] of Object.entries(srvMap)){
+    if(!sv.cpu)continue;// skip incomplete
+    const rng=sv.range==='high-grade'?'hgr':sv.range;
+    if(!CATALOG[rng])CATALOG[rng]=[];
+    // Sort ram opts by GB
+    sv.ramOpts.sort((a,b)=>a.gb-b.gb);
+    // Sort storage opts by price
+    sv.storOpts.sort((a,b)=>a.price-b.price);
+    // Build ram array and ramP map
+    sv.ramArr=[sv.baseRam,...sv.ramOpts.map(o=>o.gb)];
+    sv.ramP={[sv.baseRam]:0};
+    sv.ramOpts.forEach(o=>sv.ramP[o.gb]=o.price);
+    // Generate id
+    sv.id=key.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
+    sv.brand=detectBrand(sv.cpu);
+    sv.sockets=sv.cpu.toUpperCase().startsWith('DUAL')||sv.cpu.startsWith('2×')?2:1;
+    // SLA
+    sv.sla=rng==='advance'||rng==='game'?'99.95%':'99.99%';
+    // Tags
+    const tags=[];
+    if(sv.ramType)tags.push(sv.ramType);
+    if(sv.speed)tags.push(sv.speed+' GHz');
+    if(sv.threads)tags.push(sv.threads+'T');
+    if(sv.sockets>1)tags.push('Dual Socket');
+    if(sv.gpuOpts.length)tags.push('GPU');
+    sv.tags=tags;
+    CATALOG[rng].push(sv);
+    count++;
+  }
+  // Sort each range by price
+  for(const rng of Object.keys(CATALOG)){
+    CATALOG[rng].sort((a,b)=>a.price-b.price);
+  }
+  return count;
+}
+
+/* ═══════════════════ FILE HANDLING ═══════════════════ */
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0]);
+}
+document.getElementById('uploadZone').addEventListener('click',()=>document.getElementById('csvInput').click());
+
+function handleFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const count=buildCatalog(rows);
+    if(count===0){alert('Aucun serveur (Europe, North America) trouvé dans ce fichier.');return;}
+    // Extract date from filename
+    const dm=file.name.match(/(\w{3}\w{3}\d{2}\d{4})/);
+    catalogDate=dm?dm[1]:new Date().toLocaleDateString('fr-FR');
+    document.getElementById('catalogDesc').textContent=`${count} serveurs chargés depuis ${file.name} · ${Object.keys(CATALOG).length} gammes`;
+    document.getElementById('catalogInfo').classList.remove('hidden');
+    document.getElementById('uploadZone').classList.add('hidden');
+    document.getElementById('mainTabs').classList.remove('hidden');
+    document.getElementById('headerSub').textContent=`Configurateur Bare Metal — Catalogue ${catalogDate}`;
+    // Init
+    S.range=Object.keys(CATALOG)[0]||'advance';
+    S.srv=null;S.storIdx=0;
+    renderRanges();renderSrv();
+  };
+  reader.readAsText(file);
+}
+
+function resetCatalog(){
+  CATALOG={};
+  document.getElementById('catalogInfo').classList.add('hidden');
+  document.getElementById('uploadZone').classList.remove('hidden');
+  document.getElementById('mainTabs').classList.add('hidden');
+  document.getElementById('cfgS').classList.add('hidden');
+  S.srv=null;
+}
+
+/* ═══════════════════ TABS ═══════════════════ */
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+id));
+  if(id==='finance')renderFinance();
+  if(id==='tech')renderTech();
+}
+
+/* ═══════════════════ STATIC DATA ═══════════════════ */
+const WL=[{id:"none",n:"Aucune (Linux / Proxmox VE)",ppc:0},{id:"ws2022std",n:"Windows Server 2022 Standard",ppc:3.6},{id:"ws2022dc",n:"Windows Server 2022 Datacenter",ppc:12.5},{id:"ws2025std",n:"Windows Server 2025 Standard",ppc:4.2},{id:"ws2025dc",n:"Windows Server 2025 Datacenter",ppc:14}];
+const PS=[{id:"community",n:"Community",p:115,tk:"—",sla:"Forum"},{id:"basic",n:"Basic",p:355,tk:"3 tickets/an",sla:"J+1"},{id:"standard",n:"Standard",p:530,tk:"10 tickets/an",sla:"4h"},{id:"premium",n:"Premium",p:1060,tk:"Illimité",sla:"2h"}];
+const BK=[{id:"none",n:"Aucune",p:0},{id:"1to",n:"1 To PBS",p:29.90},{id:"5to",n:"5 To PBS",p:99.90},{id:"10to",n:"10 To PBS",p:179.90},{id:"50to",n:"50 To PBS",p:749.90},{id:"100to",n:"100 To PBS",p:1299.90}];
+
+const MODE_RANGES_ALL=['advance','scale','hgr','game'];
+const RANGE_META={
+  advance:{name:'ADVANCE',tier:'Tier 3',color:'linear-gradient(135deg,#14b8a6,#5eead4)',badge:'tl'},
+  scale:{name:'SCALE',tier:'Tier 4',color:'linear-gradient(135deg,#3b82f6,#60a5fa)',badge:''},
+  hgr:{name:'HIGH GRADE',tier:'Tier 5',color:'linear-gradient(135deg,#a855f7,#c084fc)',badge:'pu'},
+  game:{name:'GAME',tier:'Gaming',color:'linear-gradient(135deg,#f59e0b,#fbbf24)',badge:''}
+};
+
+/* ═══════════════════ STATE ═══════════════════ */
+const S={mode:'single',cpu:'all',range:'advance',srv:null,ram:null,storIdx:0,win:'none',winQty:0,sub:'community',backup:'none',nodes:3,markup:0,infog:true,mpls:false};
+const f=n=>n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const rl=g=>g>=1024?(g/1024)+' To':g+' Go';
+const fSto=g=>{if(g<=0)return'0';if(g>=1024)return(g/1024).toFixed(2).replace(/\.?0+$/,'')+' To';return Math.round(g)+' Go';};
+
+function modeRanges(){
+  // Filter available ranges based on mode
+  const avail=Object.keys(CATALOG);
+  if(S.mode==='cluster2az')return avail.filter(r=>r==='advance');
+  if(S.mode==='cluster')return avail.filter(r=>r!=='game');
+  return avail;
+}
+function filtered(){
+  let list=CATALOG[S.range]||[];
+  if(S.cpu!=='all')list=list.filter(s=>s.brand===S.cpu);
+  return list;
+}
+function srv(){return(CATALOG[S.range]||[]).find(s=>s.id===S.srv)}
+
+/* ═══════════════════ SETTERS ═══════════════════ */
+function tog(ctn,sel,val){document.querySelectorAll(ctn+' '+sel).forEach(e=>e.classList.toggle('on',e.dataset.v===val))}
+
+function setMode(m){
+  S.mode=m;tog('#modeG','.cd',m);
+  document.getElementById('nodesWrap').classList.toggle('hidden',m!=='cluster');
+  const ranges=modeRanges();
+  if(!ranges.includes(S.range))S.range=ranges[0]||'advance';
+  S.srv=null;S.storIdx=0;
+  document.getElementById('cfgS').classList.add('hidden');
+  if(m==='cluster2az')document.getElementById('srvT').textContent='Modèle de serveur (×2 nœuds sur 2 AZ)';
+  else if(m==='cluster')document.getElementById('srvT').textContent='Modèle de serveur (par nœud)';
+  else document.getElementById('srvT').textContent='Modèle de serveur';
+  renderRanges();renderSrv();
+}
+function setCpu(c){S.cpu=c;tog('#cpuTog','button',c);S.srv=null;document.getElementById('cfgS').classList.add('hidden');renderSrv();updateRangeHints();}
+function setRange(r){S.range=r;S.srv=null;S.storIdx=0;tog('#rangeG','.cd',r);document.getElementById('cfgS').classList.add('hidden');renderSrv();}
+function pickSrv(id){
+  S.srv=id;const s=srv();S.ram=s.baseRam;S.storIdx=0;
+  document.querySelectorAll('#srvL .cd').forEach(e=>e.classList.toggle('on',e.dataset.v===id));
+  document.getElementById('cfgS').classList.remove('hidden');
+  renderRam();renderStor();renderWin();renderSub();renderBk();calc();
+  document.getElementById('cfgS').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function setRam(v){S.ram=v;document.querySelectorAll('#ramG .rp').forEach(p=>p.classList.toggle('on',+p.dataset.v===v));calc();}
+function setStor(i){S.storIdx=i;document.querySelectorAll('#storL .lr').forEach(r=>r.classList.toggle('on',+r.dataset.v===i));calc();}
+function setWin(id){
+  S.win=id;
+  document.querySelectorAll('#wL .lr').forEach(r=>r.classList.toggle('on',r.dataset.v===id));
+  const isWin=id!=='none';
+  document.getElementById('winQtyWrap').classList.toggle('hidden',!isWin);
+  if(!isWin){S.winQty=0;document.getElementById('winQtyIn').value=0;}
+  else if(S.winQty===0){S.winQty=1;document.getElementById('winQtyIn').value=1;}
+  updateWinQtyLabel();
+  calc();
+}
+function updateWinQtyLabel(){
+  const s=srv();if(!s)return;
+  const wl=WL.find(l=>l.id===S.win);
+  if(!wl||!wl.ppc){document.getElementById('winQtyDesc').textContent='';document.getElementById('winQtyRes').textContent='';return;}
+  const unitCost=wl.ppc*s.cores;
+  const total=unitCost*S.winQty;
+  document.getElementById('winQtyDesc').textContent=`× ${f(unitCost)} €/lic/mois (${s.cores} cœurs × ${f(wl.ppc)} €)`;
+  document.getElementById('winQtyRes').textContent=total>0?'→ '+f(total)+' €/mois/nœud':'';
+}
+function setSub(id){S.sub=id;document.querySelectorAll('#subG .sb').forEach(b=>b.classList.toggle('on',b.dataset.v===id));calc();}
+function setNodes(n){S.nodes=n;document.querySelectorAll('#nodesRow .bt').forEach(b=>b.classList.toggle('on',+b.dataset.v===n));calc();}
+function setInfog(v){S.infog=v;tog('#infogG','.cd',String(v));calc();}
+function setMpls(v){S.mpls=v;tog('#mplsG','.cd',String(v));calc();}
+
+/* ═══════════════════ RENDERERS ═══════════════════ */
+function renderNodes(){
+  const r=document.getElementById('nodesRow');r.innerHTML='';
+  [3,4,5,6,8,10,12,16].forEach(n=>{
+    const b=document.createElement('button');b.className='bt sm'+(S.nodes===n?' on':'');b.dataset.v=n;b.textContent=n;b.onclick=()=>setNodes(n);r.appendChild(b);
+  });
+}
+
+function renderRanges(){
+  const ranges=modeRanges();
+  const g=document.getElementById('rangeG');
+  g.className='cg cg'+Math.min(ranges.length,4);g.innerHTML='';
+  if(!ranges.length){g.innerHTML='<div class="empty-msg">Aucune gamme disponible</div>';return;}
+  ranges.forEach(r=>{
+    const m=RANGE_META[r]||{name:r.toUpperCase(),tier:'',color:'linear-gradient(135deg,#666,#888)',badge:''};
+    const d=document.createElement('div');d.className='cd'+(S.range===r?' on':'');d.dataset.v=r;d.onclick=()=>setRange(r);
+    const cnt=(CATALOG[r]||[]).length;
+    d.innerHTML=`<div class="dot"></div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+        <span style="font-weight:800;font-size:14px;background:${m.color};-webkit-background-clip:text;-webkit-text-fill-color:transparent">${m.name}</span>
+        ${m.tier?'<span class="bg '+m.badge+'">'+m.tier+'</span>':''}
+      </div>
+      <div class="d">${cnt} modèle${cnt>1?'s':''} · SLA ${r==='advance'||r==='game'?'99.95%':'99.99%'}<br><span style="color:var(--txt5);font:10px var(--mono)" id="hint_${r}"></span></div>`;
+    g.appendChild(d);
+  });
+  updateRangeHints();
+}
+
+function updateRangeHints(){
+  modeRanges().forEach(r=>{
+    const list=(CATALOG[r]||[]).filter(s=>S.cpu==='all'||s.brand===S.cpu);
+    const el=document.getElementById('hint_'+r);
+    if(el)el.textContent=list.length?'à partir de '+f(Math.min(...list.map(s=>s.price)))+' €/mois · '+list.length+' réf.':'Aucun modèle '+S.cpu.toUpperCase();
+  });
+}
+
+function renderSrv(){
+  const list=filtered();
+  const el=document.getElementById('srvL');el.innerHTML='';
+  document.getElementById('srvEmpty').classList.toggle('hidden',list.length>0);
+  list.forEach(s=>{
+    const tags=s.tags.map(t=>`<span class="tag">${t}</span>`).join('')+`<span class="tag gr">SLA ${s.sla}</span>`;
+    const brandCls=s.brand==='amd'?'bg':'bg bl';
+    const d=document.createElement('div');d.className='cd sc'+(S.srv===s.id?' on':'');d.dataset.v=s.id;d.onclick=()=>pickSrv(s.id);
+    d.innerHTML=`<div class="dot"></div><div class="sh"><div class="si">
+      <div class="sn"><strong>${s.shortName}</strong><span class="ch">${s.cpuLabel||''}</span><span class="${brandCls}">${s.brand.toUpperCase()}</span></div>
+      <div class="su">${s.cpu} — ${s.cores}C/${s.threads}T</div><div class="sf">${s.speed} GHz · ${s.baseRam} Go ${s.ramType} base</div>
+      <div class="tg">${tags}</div></div>
+      <div class="sp"><div class="am">${f(s.price)} €</div><div class="un">HT/mois</div></div></div>`;
+    el.appendChild(d);
+  });
+}
+
+function renderRam(){
+  const s=srv();if(!s)return;const g=document.getElementById('ramG');g.innerHTML='';
+  s.ramArr.forEach(r=>{
+    const p=document.createElement('div');p.className='rp'+(S.ram===r?' on':'');p.dataset.v=r;p.onclick=()=>setRam(r);
+    const delta=(s.ramP[r]||0)-(s.ramP[s.baseRam]||0);
+    let h=rl(r);
+    if(delta>0)h+=`<div class="ex">+${delta} €/mois</div>`;
+    if(r===s.baseRam)h+=`<div class="inc">inclus</div>`;
+    p.innerHTML=h;g.appendChild(p);
+  });
+}
+
+function renderStor(){
+  const s=srv();if(!s)return;
+  const el=document.getElementById('storL');el.innerHTML='';
+  if(!s.storOpts.length){el.innerHTML='<div class="empty-msg">Aucune option de stockage</div>';return;}
+  s.storOpts.forEach((o,i)=>{
+    const r=document.createElement('div');r.className='lr'+(S.storIdx===i?' on':'');r.dataset.v=i;r.onclick=()=>setStor(i);
+    const pCls=o.price===0?'lp fr':'lp';
+    r.innerHTML=`<div class="ld"></div><div class="ln">${o.label}</div><div class="${pCls}">${o.price>0?'+'+f(o.price)+' €/mois':'inclus'}</div>`;
+    el.appendChild(r);
+  });
+}
+
+function renderWin(){
+  const s=srv();if(!s)return;
+  document.getElementById('wH').textContent=`Tarification : ${s.cores} cœurs physiques · BYOL possible`;
+  const el=document.getElementById('wL');el.innerHTML='';
+  WL.forEach(l=>{
+    const lp=l.ppc?l.ppc*s.cores:0;
+    const r=document.createElement('div');r.className='lr'+(S.win===l.id?' on':'');r.dataset.v=l.id;r.onclick=()=>setWin(l.id);
+    r.innerHTML=`<div class="ld"></div><div class="ln">${l.n}</div><div class="lp${lp===0?' fr':''}">${lp>0?'+'+f(lp)+' €/lic/mois':'—'}</div>`;
+    el.appendChild(r);
+  });
+  document.getElementById('winQtyWrap').classList.toggle('hidden',S.win==='none');
+  document.getElementById('winQtyIn').value=S.winQty;
+  updateWinQtyLabel();
+}
+function renderSub(){
+  const g=document.getElementById('subG');g.innerHTML='';
+  PS.forEach(s=>{
+    const b=document.createElement('div');b.className='sb'+(S.sub===s.id?' on':'');b.dataset.v=s.id;b.onclick=()=>setSub(s.id);
+    b.innerHTML=s.n+`<div class="sp">${s.p+' €/socket/an'}</div><div style="font-size:9px;color:var(--txt5);margin-top:1px">${s.sla} · ${s.tk}</div>`;g.appendChild(b);
+  });
+}
+function renderBk(){
+  const el=document.getElementById('bkL');el.innerHTML='';
+  BK.forEach(b=>{
+    const r=document.createElement('div');r.className='lr'+(S.backup===b.id?' on':'');r.dataset.v=b.id;
+    r.onclick=()=>{S.backup=b.id;document.querySelectorAll('#bkL .lr').forEach(x=>x.classList.toggle('on',x.dataset.v===b.id));calc()};
+    r.innerHTML=`<div class="ld"></div><div class="ln">${b.n}</div><div class="${b.p===0?'lp fr':'lp'}">${b.p>0?f(b.p)+' €/mois':'—'}</div>`;
+    el.appendChild(r);
+  });
+}
+
+/* ═══════════════════ CALC ═══════════════════ */
+function getCalcData(){
+  const s=srv();if(!s)return null;
+  const ramDelta=(s.ramP[S.ram]||0)-(s.ramP[s.baseRam]||0);
+  const storOpt=s.storOpts[S.storIdx]||{price:0,disks:0,totalGb:0,label:'—'};
+  const wl=WL.find(l=>l.id===S.win);
+  const winUnitCost=wl&&wl.ppc?wl.ppc*s.cores:0;
+  const winCost=winUnitCost*S.winQty;
+  const ps=PS.find(x=>x.id===S.sub);
+  const psSockets=s.sockets;
+  const psCost=(ps?.p||0)*psSockets/12;
+  const bk=BK.find(x=>x.id===S.backup);
+  const bkCost=bk?.p||0;
+
+  let node=s.price+Math.max(0,ramDelta)+storOpt.price+winCost+psCost+bkCost;
+
+  let mult=S.mode==='cluster2az'?2:S.mode==='cluster'?S.nodes:1;
+  const ovhMonth=node*mult;
+  const mkAmt=ovhMonth*(S.markup/100);
+  const infogMonth=S.infog?180*mult:0;
+  const mplsMonth=S.mpls?640:0;
+  const totalHT=ovhMonth+mkAmt+infogMonth+mplsMonth;
+  const setupTotal=s.setup*mult;
+
+  return{s,ramDelta,storOpt,wl,winUnitCost,winCost,ps,psSockets,psCost,bk,bkCost,node,mult,ovhMonth,mkAmt,infogMonth,mplsMonth,totalHT,setupTotal,totalTTC:totalHT*1.2,annualHT:totalHT*12,annualTTC:totalHT*1.2*12};
+}
+
+function calc(){
+  const d=getCalcData();if(!d)return;
+  const{s,storOpt,wl,ps,mult}=d;
+
+  let modeLabel=S.mode==='cluster2az'?'Cluster 2 nœuds / 2 AZ':S.mode==='cluster'?`Cluster HA ${S.nodes} nœuds`:'Single Node';
+  document.getElementById('sumT').textContent='Récapitulatif — '+modeLabel;
+
+  let grid=`
+    <div class="l">Mode</div><div class="v">${modeLabel}</div>
+    <div class="l">Serveur</div><div class="v">${s.shortName}${mult>1?' × '+mult:''}</div>
+    <div class="l">CPU</div><div class="v s">${s.cpu} — ${s.cores}C/${s.threads}T${s.sockets>1?' ('+s.sockets+'P)':''}</div>
+    <div class="l">RAM</div><div class="v">${rl(S.ram)} ${s.ramType}${mult>1?' /nœud':''}</div>
+    <div class="l">Stockage</div><div class="v s">${storOpt.label}${mult>1?' /nœud':''}</div>
+    <div class="l">Réseau pub/vRack</div><div class="v s">${s.pubBw.substring(0,40)}</div>
+    <div class="l">Windows</div><div class="v">${wl&&S.winQty>0?wl.n+' × '+S.winQty+' lic.':'Aucune'}</div>
+    <div class="l">Proxmox VE</div><div class="v">${ps?ps.n+' · '+ps.p+' €/socket/an':''}</div>
+    <div class="l">Infogérance BTBS</div><div class="v">${S.infog?'<span style="color:var(--green)">✓ 180 €/nœud/mois</span>':'Non'}</div>`;
+  if(S.markup>0)grid+=`<div class="l">Markup</div><div class="v" style="color:var(--accent2)">${S.markup}% → +${f(d.mkAmt)} €/mois</div>`;
+  document.getElementById('sumG').innerHTML=grid;
+
+  document.getElementById('pLbl').textContent='Estimation mensuelle HT'+(mult>1?' · '+mult+' nœuds':'');
+  document.getElementById('pHT').textContent=f(d.totalHT)+' €';
+  document.getElementById('pTTC').textContent='soit '+f(d.totalTTC)+' € TTC/mois';
+  document.getElementById('mkRes').textContent=S.markup>0?'→ +'+f(d.mkAmt)+' €/mois':'';
+
+  // Cluster resources
+  const cresBox=document.getElementById('cresBox');
+  if(mult>1){
+    cresBox.classList.remove('hidden');
+    const totalThreads=s.threads*mult;
+    const totalRam=S.ram*mult;
+    const isCephHA=S.mode==='cluster';
+    const totalOSDs=storOpt.disks*mult;
+    const cephRam=isCephHA?totalOSDs*8:0;
+    const ramUtile=totalRam-cephRam;
+    const totalRawGb=storOpt.totalGb*mult;
+    const repF=isCephHA?3:2;
+    const usableGb=storOpt.totalGb>0?totalRawGb/repF:0;
+
+    const dN=mult-1;
+    const dThreads=s.threads*dN;
+    const dRam=S.ram*dN;
+    const dOSDs=storOpt.disks*dN;
+    const dCephRam=isCephHA?dOSDs*8:0;
+    const dRamUtile=dRam-dCephRam;
+
+    function bar(label,value,unit,sub,color,pct){
+      return`<div class="cres-row"><div class="cres-hdr"><span class="cres-lbl">${label}</span><span class="cres-val ${color}">${value} ${unit}</span></div><div class="cres-bar"><div class="cres-bar-fill ${color}" style="width:${Math.min(pct,100)}%"></div></div>${sub?'<div class="cres-sub">'+sub+'</div>':''}</div>`;
+    }
+    let html=bar('vCPU Totaux',totalThreads,'Threads',`Ratio 1:3 = ${totalThreads*3} vCPUs`,'blue',100);
+    html+=bar('RAM Totale',rl(totalRam),'',`${rl(S.ram)} /nœud × ${mult}`,'gold',100);
+    if(isCephHA&&cephRam>0)html+=bar('RAM Utile (hors Ceph)',ramUtile+' Go','',`−${cephRam} Go (${totalOSDs} OSDs × 8Go)`,'purple',totalRam>0?(ramUtile/totalRam)*100:0);
+    if(totalRawGb>0)html+=bar('Stockage Brut',fSto(totalRawGb),'',`Utile ≈ ${fSto(usableGb)} (réplica ${repF})`,'orange',100);
+    document.getElementById('cresContent').innerHTML=html;
+
+    document.getElementById('cresMode').textContent=S.mode==='cluster2az'?'(Perte 1 AZ)':'(Perte 1 nœud)';
+    let dhtml=bar('vCPU Disponibles',dThreads+' Threads','',`Ratio 1:3 = ${dThreads*3} vCPUs`,'green',totalThreads>0?(dThreads/totalThreads)*100:0);
+    if(isCephHA&&cephRam>0)dhtml+=bar('RAM Utile',dRamUtile+' Go','',`${rl(dRam)} − ${dCephRam} Go Ceph`,'green',totalRam>0?(dRamUtile/totalRam)*100:0);
+    else dhtml+=bar('RAM Disponible',rl(dRam),'',`${rl(S.ram)} × ${dN}`,'green',totalRam>0?(dRam/totalRam)*100:0);
+    document.getElementById('cresDeg').innerHTML=dhtml;
+    document.getElementById('cresNote').innerHTML=S.mode==='cluster2az'?'Attention : pas de quorum Ceph avec 2 nœuds.':'Capacité garantie si un datacenter est hors ligne.';
+  } else cresBox.classList.add('hidden');
+
+  // PO
+  let po=`<div class="l">Engagement</div><div class="v">12 mois</div>
+    <div class="l">Coût OVHcloud /mois HT</div><div class="v">${f(d.ovhMonth)} €</div>`;
+  if(S.markup>0)po+=`<div class="l">Markup (${S.markup}%)</div><div class="v" style="color:var(--accent2)">+${f(d.mkAmt)} €</div>`;
+  if(S.infog)po+=`<div class="l">Infogérance BTBS</div><div class="v">${f(d.infogMonth)} €/mois</div>`;
+  if(S.mpls)po+=`<div class="l">MPLS</div><div class="v">${f(d.mplsMonth)} €/mois</div>`;
+  if(d.setupTotal>0)po+=`<div class="l">Frais d'installation</div><div class="v">${f(d.setupTotal)} € (unique)</div>`;
+  po+=`<div class="l" style="padding-top:7px;border-top:1px solid var(--border)">Total annuel HT</div><div class="v big" style="padding-top:7px;border-top:1px solid var(--border)">${f(d.annualHT)} €</div>`;
+  po+=`<div class="l">Total annuel TTC</div><div class="v">${f(d.annualTTC)} €</div>`;
+  document.getElementById('poG').innerHTML=po;
+}
+
+/* ═══════════════════ SYNTHÈSE FINANCIÈRE ═══════════════════ */
+function renderFinance(){
+  const d=getCalcData();
+  if(!d){document.getElementById('finContent').innerHTML='<div class="syn-empty">Sélectionnez un serveur dans l\'onglet Configurateur.</div>';return;}
+  const{s,ramDelta,storOpt,winUnitCost,winCost,psCost,bkCost,node,mult,ovhMonth,mkAmt,infogMonth,mplsMonth,totalHT,setupTotal}=d;
+
+  const m1=totalHT,m12=m1*12,m36=m1*36,m60=m1*60;
+  const setup1=setupTotal;
+  const tco12=m12+setup1,tco36=m36+setup1,tco60=m60+setup1;
+
+  let h=`<div class="kpi-row">
+    <div class="kpi orange"><div class="kv">${f(m1)} €</div><div class="kl">Mensuel HT</div></div>
+    <div class="kpi blue"><div class="kv">${f(tco12)} €</div><div class="kl">TCO 1 an</div></div>
+    <div class="kpi green"><div class="kv">${f(tco36)} €</div><div class="kl">TCO 3 ans</div></div>
+    <div class="kpi purple"><div class="kv">${f(tco60)} €</div><div class="kl">TCO 5 ans</div></div>
+  </div>`;
+
+  // Cost breakdown per node
+  h+=`<div class="syn-card"><h4>📊 Décomposition coût mensuel par nœud</h4><div class="syn-grid">
+    <div class="l">Serveur de base</div><div class="v">${f(s.price)} €</div>
+    <div class="l">Upgrade RAM (${rl(S.ram)})</div><div class="v">${ramDelta>0?'+'+f(ramDelta)+' €':'inclus'}</div>
+    <div class="l">Stockage</div><div class="v">${storOpt.price>0?'+'+f(storOpt.price)+' €':'inclus'}</div>
+    <div class="l">Windows licence${S.winQty>0?' (×'+S.winQty+')':''}</div><div class="v">${winCost>0?'+'+f(winCost)+' € ('+S.winQty+'× '+f(winUnitCost)+' €)':'—'}</div>
+    <div class="l">Proxmox subscription</div><div class="v">${psCost>0?'+'+f(psCost)+' €':'inclus (Community)'}</div>
+    <div class="l">Backup PBS</div><div class="v">${bkCost>0?'+'+f(bkCost)+' €':'—'}</div>
+    <div class="syn-sep"></div>
+    <div class="l"><strong>Total par nœud</strong></div><div class="v hi">${f(node)} €/mois</div>
+  </div></div>`;
+
+  // Total cluster
+  h+=`<div class="syn-card"><h4>🏗 Coût total infrastructure (${mult} nœud${mult>1?'s':''})</h4><div class="syn-grid">
+    <div class="l">OVHcloud (${mult}× ${f(node)} €)</div><div class="v">${f(ovhMonth)} €/mois</div>`;
+  if(S.markup>0)h+=`<div class="l">Markup ${S.markup}%</div><div class="v">+${f(mkAmt)} €/mois</div>`;
+  if(S.infog)h+=`<div class="l">Infogérance BTBS</div><div class="v">+${f(infogMonth)} €/mois</div>`;
+  if(S.mpls)h+=`<div class="l">Accostage MPLS</div><div class="v">+${f(mplsMonth)} €/mois</div>`;
+  h+=`<div class="syn-sep"></div>
+    <div class="l"><strong>Mensuel HT</strong></div><div class="v hi">${f(totalHT)} €</div>
+    <div class="l">Mensuel TTC (20%)</div><div class="v">${f(totalHT*1.2)} €</div>
+    <div class="syn-sep"></div>
+    <div class="l">Annuel HT</div><div class="v blue">${f(totalHT*12)} €</div>
+    <div class="l">3 ans HT</div><div class="v">${f(totalHT*36)} €</div>
+    <div class="l">5 ans HT</div><div class="v">${f(totalHT*60)} €</div>`;
+  if(setup1>0)h+=`<div class="syn-sep"></div><div class="l">Frais d'installation (unique)</div><div class="v">${f(setup1)} €</div>`;
+  h+=`</div></div>`;
+
+  // Ratios
+  const totalCores=s.cores*mult;
+  const totalRam=S.ram*mult;
+  const totalStorGb=storOpt.totalGb*mult;
+  if(totalHT>0){
+    h+=`<div class="syn-card"><h4>📈 Ratios économiques (HT mensuel)</h4><div class="syn-grid">
+      <div class="l">Coût par cœur physique</div><div class="v">${f(totalHT/totalCores)} €/cœur/mois</div>
+      <div class="l">Coût par Go de RAM</div><div class="v">${f(totalHT/totalRam)} €/Go/mois</div>`;
+    if(totalStorGb>0){
+      const usableGb=S.mode==='cluster'?totalStorGb/3:S.mode==='cluster2az'?totalStorGb/2:totalStorGb;
+      h+=`<div class="l">Coût par To brut</div><div class="v">${f(totalHT/(totalStorGb/1024))} €/To/mois</div>`;
+      if(mult>1)h+=`<div class="l">Coût par To utile (Ceph)</div><div class="v">${f(totalHT/(usableGb/1024))} €/To/mois</div>`;
+    }
+    h+=`</div></div>`;
+  }
+
+  h+=`<div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>`;
+  document.getElementById('finContent').innerHTML=h;
+}
+
+/* ═══════════════════ SYNTHÈSE TECHNIQUE ═══════════════════ */
+function renderTech(){
+  const d=getCalcData();
+  if(!d){document.getElementById('techContent').innerHTML='<div class="syn-empty">Sélectionnez un serveur dans l\'onglet Configurateur.</div>';return;}
+  const{s,storOpt,mult}=d;
+
+  const totalCores=s.cores*mult;
+  const totalThreads=s.threads*mult;
+  const totalRam=S.ram*mult;
+  const totalStorGb=storOpt.totalGb*mult;
+  const isCephHA=S.mode==='cluster';
+  const repF=isCephHA?3:S.mode==='cluster2az'?2:1;
+  const usableGb=totalStorGb/repF;
+  const totalOSDs=storOpt.disks*mult;
+  const cephRam=isCephHA?totalOSDs*8:0;
+  const ramUtile=totalRam-cephRam;
+
+  let modeLabel=S.mode==='cluster2az'?'Cluster 2 AZ':S.mode==='cluster'?`Cluster HA ${S.nodes}N`:'Single Node';
+
+  let h=`<div class="kpi-row">
+    <div class="kpi blue"><div class="kv">${totalCores}C / ${totalThreads}T</div><div class="kl">CPU Total</div></div>
+    <div class="kpi gold"><div class="kv">${rl(totalRam)}</div><div class="kl">RAM Totale</div></div>
+    <div class="kpi orange"><div class="kv">${fSto(totalStorGb)}</div><div class="kl">Stockage Brut</div></div>
+    <div class="kpi teal"><div class="kv">${mult}</div><div class="kl">Nœud${mult>1?'s':''}</div></div>
+  </div>`;
+
+  // Compute
+  h+=`<div class="syn-2col"><div class="syn-card"><h4>🔧 Compute</h4><div class="syn-grid">
+    <div class="l">Architecture</div><div class="v">${modeLabel}</div>
+    <div class="l">Serveur</div><div class="v">${s.shortName}</div>
+    <div class="l">CPU</div><div class="v">${s.cpu}</div>
+    <div class="l">Cœurs / nœud</div><div class="v">${s.cores}C / ${s.threads}T</div>
+    <div class="l">Cœurs total</div><div class="v green">${totalCores}C / ${totalThreads}T</div>
+    <div class="l">vCPU prod (1:3)</div><div class="v">${totalThreads*3} vCPUs</div>
+    <div class="l">Sockets</div><div class="v">${s.sockets} × ${mult} = ${s.sockets*mult}</div>
+    <div class="l">SLA</div><div class="v green">${s.sla}</div>
+  </div></div>`;
+
+  // Memory
+  h+=`<div class="syn-card"><h4>💾 Mémoire</h4><div class="syn-grid">
+    <div class="l">RAM / nœud</div><div class="v">${rl(S.ram)} ${s.ramType}</div>
+    <div class="l">RAM totale</div><div class="v green">${rl(totalRam)}</div>`;
+  if(isCephHA&&cephRam>0)h+=`<div class="l">Réserve Ceph OSD</div><div class="v">−${cephRam} Go (${totalOSDs}×8Go)</div>
+    <div class="l">RAM utile VMs</div><div class="v green">${ramUtile} Go</div>`;
+  h+=`<div class="l">Fréquence</div><div class="v">${s.ramClk?s.ramClk+' MHz':'—'}</div>
+  </div></div></div>`;
+
+  // Storage
+  h+=`<div class="syn-2col"><div class="syn-card"><h4>💿 Stockage</h4><div class="syn-grid">
+    <div class="l">Config / nœud</div><div class="v">${storOpt.label}</div>
+    <div class="l">Disques / nœud</div><div class="v">${storOpt.disks}</div>
+    <div class="l">Capacité / nœud</div><div class="v">${fSto(storOpt.totalGb)}</div>
+    <div class="l">Total brut cluster</div><div class="v green">${fSto(totalStorGb)}</div>`;
+  if(mult>1&&totalStorGb>0)h+=`<div class="l">Réplica</div><div class="v">×${repF}</div>
+    <div class="l">Capacité utile</div><div class="v green">≈ ${fSto(usableGb)}</div>`;
+  h+=`</div></div>`;
+
+  // Network
+  h+=`<div class="syn-card"><h4>🌐 Réseau</h4><div class="syn-grid">
+    <div class="l">Bande passante pub.</div><div class="v">${s.pubBw.substring(0,45)}</div>
+    <div class="l">vRack privé</div><div class="v">${s.privBw.substring(0,45)}</div>
+    <div class="l">MPLS</div><div class="v">${S.mpls?'✓ Activé':'Non'}</div>
+    <div class="l">Anti-DDoS</div><div class="v green">✓ Inclus</div>
+  </div></div></div>`;
+
+  // Degraded mode
+  if(mult>1){
+    const dN=mult-1;
+    h+=`<div class="syn-card" style="border-color:rgba(251,191,36,.2);background:linear-gradient(145deg,#1f1c14,#1a1812)"><h4>🛡 Mode dégradé (perte 1 nœud)</h4><div class="syn-grid">
+      <div class="l">Nœuds restants</div><div class="v">${dN}</div>
+      <div class="l">vCPU disponibles</div><div class="v">${s.threads*dN}T (${s.threads*dN*3} vCPUs @1:3)</div>`;
+    if(isCephHA){
+      const dCeph=(storOpt.disks*dN)*8;
+      h+=`<div class="l">RAM utile</div><div class="v">${S.ram*dN-dCeph} Go</div>`;
+    } else {
+      h+=`<div class="l">RAM disponible</div><div class="v">${rl(S.ram*dN)}</div>`;
+    }
+    h+=`<div class="l">Impact</div><div class="v" style="color:#fbbf24">−${Math.round(100/mult)}% capacité</div>
+    </div></div>`;
+  }
+
+  h+=`<div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>`;
+  document.getElementById('techContent').innerHTML=h;
+}
+
+/* ═══════════════════ INIT ═══════════════════ */
+renderNodes();
+</script>
+</body>
+</html>
