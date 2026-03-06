@@ -95,7 +95,7 @@ html{scroll-behavior:smooth}body{background:var(--bg);color:var(--txt);font-fami
 .sc .si{flex:1;padding-right:32px}.sc .sn{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap}
 .sc .sn strong{font-size:13px;color:#fff}.sc .sn .ch{font:10px var(--mono);color:#888;background:#222;padding:2px 5px;border-radius:3px}
 .sc .su{font:11px/1.5 var(--mono);color:#bbb;margin-bottom:2px}.sc .sf{font:10px var(--mono);color:var(--txt4)}
-.sc .sp{text-align:right;flex-shrink:0;margin-top:2px}.sc .sp .am{font:800 16px var(--mono);color:var(--accent)}.sc .sp .un{font-size:10px;color:var(--txt4)}
+.sc .sp{text-align:right;flex-shrink:0;margin-top:2px;margin-right:22px}.sc .sp .am{font:800 16px var(--mono);color:var(--accent)}.sc .sp .un{font-size:10px;color:var(--txt4)}
 .sc .tg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 
 .mk-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
@@ -147,6 +147,11 @@ html{scroll-behavior:smooth}body{background:var(--bg);color:var(--txt);font-fami
 .empty-msg{padding:18px;text-align:center;color:var(--txt4);font-size:12px;border:1px dashed var(--border);border-radius:10px;margin-top:6px}
 .disclaimer{margin-top:16px;padding:12px 16px;border-radius:8px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.15);font:italic 11px/1.6 var(--font);color:#d4a017;display:flex;align-items:flex-start;gap:8px}
 .disclaimer::before{content:'⚠';font-style:normal;flex-shrink:0;font-size:13px}
+.support-ent{margin-top:12px;padding:14px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(168,85,247,.06));border:1px solid rgba(59,130,246,.2);line-height:1.6}
+.support-ent .se-t{font:700 11px var(--mono);color:#60a5fa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.support-ent .se-t a{color:#818cf8;text-decoration:none;font-weight:400;font-size:10px;letter-spacing:0;text-transform:none}.support-ent .se-t a:hover{text-decoration:underline}
+.support-ent .se-row{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:10px;color:var(--txt3)}
+.support-ent .se-item{display:flex;align-items:center;gap:4px}.support-ent .se-item::before{content:'✓';color:#60a5fa;font-weight:700;font-size:9px}
 
 /* Synthese panels */
 .syn-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px}
@@ -286,6 +291,21 @@ html{scroll-behavior:smooth}body{background:var(--bg);color:var(--txt);font-fami
           <button class="bt pri" onclick="window.print()">Demander un devis</button>
         </div>
         <div class="inc-bar">✓ Anti-DDoS · ✓ vRack réseau privé · ✓ IPMI/KVM · ✓ Double alimentation · ✓ 500 Go backup FTP offert · ✓ Trafic illimité</div>
+        <div class="support-ent">
+          <div class="se-t">🛡 Support OVHcloud Enterprise inclus <a href="https://www.ovhcloud.com/fr/support-levels/enterprise/" target="_blank">En savoir plus ↗</a></div>
+          <div class="se-row">
+            <span class="se-item">Support 24/7 par ingénieurs dédiés</span>
+            <span class="se-item">Réponse P1 en 15 min</span>
+            <span class="se-item">Technical Account Manager nommé</span>
+            <span class="se-item">5 niveaux de priorité incidents</span>
+            <span class="se-item">Cellule de crise automatique (P1)</span>
+            <span class="se-item">Audit infrastructure annuel (4h)</span>
+            <span class="se-item">Compte-rendu mensuel &amp; dashboard</span>
+            <span class="se-item">Livraison prioritaire nouveaux services</span>
+            <span class="se-item">Accès architectes &amp; experts sécurité</span>
+            <span class="se-item">Option Trusted (équipes UE uniquement)</span>
+          </div>
+        </div>
         <div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>
       </div>
 
@@ -851,6 +871,17 @@ function renderFinance(){
     h+=`</div></div>`;
   }
 
+  h+=`<div class="support-ent">
+    <div class="se-t">🛡 Support OVHcloud Enterprise inclus <a href="https://www.ovhcloud.com/fr/support-levels/enterprise/" target="_blank">En savoir plus ↗</a></div>
+    <div class="se-row">
+      <span class="se-item">Support 24/7 par ingénieurs dédiés</span>
+      <span class="se-item">Réponse P1 en 15 min</span>
+      <span class="se-item">Technical Account Manager nommé</span>
+      <span class="se-item">Cellule de crise automatique (P1)</span>
+      <span class="se-item">Audit infrastructure annuel (4h)</span>
+      <span class="se-item">Compte-rendu mensuel &amp; dashboard</span>
+    </div>
+  </div>`;
   h+=`<div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>`;
   document.getElementById('finContent').innerHTML=h;
 }
@@ -935,6 +966,21 @@ function renderTech(){
     h+=`<div class="l">Impact</div><div class="v" style="color:#fbbf24">−${Math.round(100/mult)}% capacité</div>
     </div></div>`;
   }
+
+  // Support Enterprise
+  h+=`<div class="syn-card" style="border-color:rgba(59,130,246,.2);background:linear-gradient(145deg,#151820,#131624)">
+    <h4>🛡 Support OVHcloud Enterprise <a href="https://www.ovhcloud.com/fr/support-levels/enterprise/" target="_blank" style="font:400 10px var(--mono);color:#818cf8;text-decoration:none;margin-left:8px">Détails ↗</a></h4>
+    <div class="syn-grid">
+      <div class="l">Disponibilité</div><div class="v green">24/7 — Ingénieurs dédiés</div>
+      <div class="l">Réponse incident P1</div><div class="v green">15 minutes</div>
+      <div class="l">Technical Account Manager</div><div class="v">Nommé · Compte-rendu mensuel</div>
+      <div class="l">Gestion des incidents</div><div class="v">5 niveaux de priorité · Cellule de crise auto (P1)</div>
+      <div class="l">Audit infrastructure</div><div class="v">4h/an · Sur site ou à distance</div>
+      <div class="l">Services complémentaires</div><div class="v">Architectes, experts sécurité sur demande</div>
+      <div class="l">Livraison prioritaire</div><div class="v">Priorisation des nouveaux services via TAM</div>
+      <div class="l">Option Trusted UE</div><div class="v">Interventions par équipes localisées en UE uniquement</div>
+    </div>
+  </div>`;
 
   h+=`<div class="disclaimer">Ce document constitue une offre pré-chiffrée soumise à validation technique de nos architectes cloud.</div>`;
   document.getElementById('techContent').innerHTML=h;
